@@ -7,7 +7,7 @@
 
 import { z } from "zod";
 import { plankaRequest } from "../common/utils.js";
-import { PlankaTaskSchema } from "../common/types.js";
+import { PlankaTaskListSchema, PlankaTaskSchema } from "../common/types.js";
 
 // Schema definitions
 /**
@@ -229,6 +229,23 @@ export async function batchCreateTasks(options: BatchCreateTasksOptions) {
  * @param {string} cardId - The ID of the card to get tasks from
  * @returns {Promise<Array<object>>} Array of tasks in the card
  */
+export async function getTaskLists(cardId: string) {
+    try {
+        const response = await plankaRequest(`/api/cards/${cardId}/task-lists`);
+        const parsedResponse = z
+            .object({ items: z.array(PlankaTaskListSchema) })
+            .parse(response);
+        return parsedResponse.items;
+    } catch (error) {
+        console.error(`Error getting task lists for card ${cardId}:`, error);
+        throw new Error(
+            `Failed to get task lists: ${
+                error instanceof Error ? error.message : String(error)
+            }`,
+        );
+    }
+}
+
 export async function getTasks(taskListId: string) {
     try {
         const response = await plankaRequest(

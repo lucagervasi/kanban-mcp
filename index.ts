@@ -58,11 +58,6 @@ server.tool(
     name: z.string().optional().describe("The name of the board"),
     position: z.number().optional().describe("The position of the board"),
     type: z.string().optional().describe("The type of the board"),
-    page: z
-      .number()
-      .optional()
-      .describe("The page number for pagination (1-indexed)"),
-    perPage: z.number().optional().describe("The number of items per page"),
     boardId: z
       .string()
       .optional()
@@ -83,11 +78,7 @@ server.tool(
 
     switch (args.action) {
       case "get_projects":
-        if (!args.page || !args.perPage)
-          throw new Error(
-            "page and perPage are required for get_projects action"
-          );
-        result = await projects.getProjects(args.page, args.perPage);
+        result = await projects.getProjects();
         break;
 
       case "get_project":
@@ -456,7 +447,7 @@ server.tool(
         "bright-moss",
         "antique-blue",
         "dark-granite",
-        "lagune-blue",
+        "lagoon-blue",
         "sunny-grass",
         "morning-sky",
         "light-orange",
@@ -570,7 +561,7 @@ server.tool(
       ])
       .describe("The action to perform"),
     id: z.string().optional().describe("The ID of the task"),
-    cardId: z.string().optional().describe("The ID of the card"),
+    taskListId: z.string().optional().describe("The ID of the task list"),
     name: z.string().optional().describe("The name of the task"),
     isCompleted: z
       .boolean()
@@ -580,7 +571,7 @@ server.tool(
     tasks: z
       .array(
         z.object({
-          cardId: z.string().describe("The ID of the card for this task"),
+          taskListId: z.string().describe("The ID of the task list for this task"),
           name: z.string().describe("The name of this task"),
           position: z.number().optional().describe("The position of this task"),
         })
@@ -593,16 +584,16 @@ server.tool(
 
     switch (args.action) {
       case "get_all":
-        if (!args.cardId)
-          throw new Error("cardId is required for get_all action");
-        result = await tasks.getTasks(args.cardId);
+        if (!args.taskListId)
+          throw new Error("taskListId is required for get_all action");
+        result = await tasks.getTasks(args.taskListId);
         break;
 
       case "create":
-        if (!args.cardId || !args.name)
-          throw new Error("cardId and name are required for create action");
+        if (!args.taskListId || !args.name)
+          throw new Error("taskListId and name are required for create action");
         result = await tasks.createTask({
-          cardId: args.cardId,
+          taskListId: args.taskListId,
           name: args.name,
           position: args.position,
         });

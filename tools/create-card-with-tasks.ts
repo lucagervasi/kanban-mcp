@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createCard } from "../operations/cards.js";
-import { createTask } from "../operations/tasks.js";
+import { createTask, getTaskLists } from "../operations/tasks.js";
 import { createComment } from "../operations/comments.js";
 
 /**
@@ -66,17 +66,21 @@ export async function createCardWithTasks(params: CreateCardWithTasksParams) {
         // Create tasks if provided
         const createdTasks = [];
         if (tasks && tasks.length > 0) {
-            for (let i = 0; i < tasks.length; i++) {
-                const taskName = tasks[i];
-                // Calculate position for each task (65535, 131070, 196605, etc.)
-                const taskPosition = 65535 * (i + 1);
+            const taskLists = await getTaskLists(card.id);
+            if (taskLists.length > 0) {
+                const taskListId = taskLists[0].id;
+                for (let i = 0; i < tasks.length; i++) {
+                    const taskName = tasks[i];
+                    // Calculate position for each task (65535, 131070, 196605, etc.)
+                    const taskPosition = 65535 * (i + 1);
 
-                const task = await createTask({
-                    cardId: card.id,
-                    name: taskName,
-                    position: taskPosition,
-                });
-                createdTasks.push(task);
+                    const task = await createTask({
+                        taskListId: taskListId,
+                        name: taskName,
+                        position: taskPosition,
+                    });
+                    createdTasks.push(task);
+                }
             }
         }
 
