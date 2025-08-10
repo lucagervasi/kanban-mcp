@@ -56,7 +56,6 @@ export const UpdateBoardSchema = z.object({
     id: z.string().describe("Board ID"),
     name: z.string().optional().describe("Board name"),
     position: z.number().optional().describe("Board position"),
-    type: z.string().optional().describe("Board type"),
 });
 
 /**
@@ -244,37 +243,17 @@ export async function createBoard(options: CreateBoardOptions) {
  */
 export async function getBoards(projectId: string) {
     try {
-        // Get all projects which includes boards in the response
-        const response = await plankaRequest(`/api/projects`);
-
-        // Check if the response has the expected structure
-        if (
-            response &&
-            typeof response === "object" &&
-            "included" in response &&
-            response.included &&
-            typeof response.included === "object" &&
-            "boards" in (response.included as Record<string, unknown>)
-        ) {
-            // Filter boards by projectId
-            const allBoards =
-                (response.included as Record<string, unknown>).boards;
-            if (Array.isArray(allBoards)) {
-                const filteredBoards = allBoards.filter((board) =>
-                    typeof board === "object" &&
-                    board !== null &&
-                    "projectId" in board &&
-                    board.projectId === projectId
-                );
-                return filteredBoards;
-            }
-        }
-
-        // If we can't find boards in the expected format, return an empty array
-        return [];
+        const response = await plankaRequest(
+            `/api/projects/${projectId}/boards`,
+        );
+        const parsedResponse = BoardsResponseSchema.parse(response);
+        return parsedResponse.items;
     } catch (error) {
-        // If all else fails, return an empty array
-        return [];
+        throw new Error(
+            `Failed to get boards: ${
+                error instanceof Error ? error.message : String(error)
+            }`,
+        );
     }
 }
 
@@ -301,7 +280,7 @@ export async function getBoard(id: string) {
  */
 export async function updateBoard(
     id: string,
-    options: Partial<Omit<CreateBoardOptions, "projectId">>,
+    options: Partial<Omit<UpdateBoardOptions, "id">>,
 ) {
     const response = await plankaRequest(`/api/boards/${id}`, {
         method: "PATCH",

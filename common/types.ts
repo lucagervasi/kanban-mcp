@@ -14,7 +14,12 @@ export const PlankaUserSchema = z.object({
 export const PlankaProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
-  background: z.string().nullable(),
+  description: z.string().nullable(),
+  backgroundType: z.string().nullable(),
+  backgroundGradient: z.string().nullable(),
+  backgroundImageId: z.string().nullable(),
+  isHidden: z.boolean(),
+  ownerProjectManagerId: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
 });
@@ -24,6 +29,10 @@ export const PlankaBoardSchema = z.object({
   projectId: z.string(),
   name: z.string(),
   position: z.number(),
+  defaultView: z.string(),
+  defaultCardType: z.string(),
+  limitCardTypesToDefaultOne: z.boolean(),
+  alwaysDisplayCardCreator: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
 });
@@ -31,8 +40,10 @@ export const PlankaBoardSchema = z.object({
 export const PlankaListSchema = z.object({
   id: z.string(),
   boardId: z.string(),
-  name: z.string(),
+  name: z.string().nullable(),
   position: z.number(),
+  type: z.string(),
+  color: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
 });
@@ -55,19 +66,35 @@ export const PlankaStopwatchSchema = z.object({
 export const PlankaCardSchema = z.object({
   id: z.string(),
   listId: z.string(),
+  boardId: z.string(),
   name: z.string(),
   description: z.string().nullable(),
   position: z.number(),
   dueDate: z.string().nullable(),
-  isCompleted: z.boolean().optional(),
+  isClosed: z.boolean().optional(),
   stopwatch: PlankaStopwatchSchema.nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable(),
+  type: z.string(),
+  commentsTotal: z.number(),
+  listChangedAt: z.string().nullable(),
+  creatorUserId: z.string().nullable(),
+  prevListId: z.string().nullable(),
+  coverAttachmentId: z.string().nullable(),
+});
+
+export const PlankaTaskListSchema = z.object({
+  id: z.string(),
+  cardId: z.string(),
+  name: z.string(),
+  position: z.number(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
 });
 
 export const PlankaTaskSchema = z.object({
   id: z.string(),
-  cardId: z.string(),
+  taskListId: z.string(),
   name: z.string(),
   isCompleted: z.boolean(),
   position: z.number(),

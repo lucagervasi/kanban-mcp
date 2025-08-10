@@ -16,6 +16,7 @@ import { PlankaProjectSchema } from "../common/types.js";
  */
 export const CreateProjectSchema = z.object({
     name: z.string().describe("Project name"),
+    description: z.string().optional().describe("Project description"),
 });
 
 /**
@@ -23,14 +24,7 @@ export const CreateProjectSchema = z.object({
  * @property {number} [page] - Page number for pagination (default: 1)
  * @property {number} [perPage] - Number of results per page (default: 30, max: 100)
  */
-export const GetProjectsSchema = z.object({
-    page: z.number().optional().describe(
-        "Page number for pagination (default: 1)",
-    ),
-    perPage: z.number().optional().describe(
-        "Number of results per page (default: 30, max: 100)",
-    ),
-});
+export const GetProjectsSchema = z.object({});
 
 /**
  * Schema for retrieving a specific project
@@ -48,6 +42,11 @@ export const GetProjectSchema = z.object({
 export const UpdateProjectSchema = z.object({
     id: z.string().describe("Project ID"),
     name: z.string().optional().describe("Project name"),
+    description: z.string().optional().describe("Project description"),
+    backgroundType: z.string().optional().describe("Background type"),
+    backgroundGradient: z.string().optional().describe("Background gradient"),
+    backgroundImageId: z.string().optional().describe("Background image ID"),
+    isHidden: z.boolean().optional().describe("Whether the project is hidden"),
 });
 
 /**
@@ -88,26 +87,11 @@ const ProjectResponseSchema = z.object({
  * @returns {Promise<{items: Array<object>, included?: object}>} Paginated projects
  * @throws {Error} If retrieving projects fails
  */
-export async function getProjects(
-    page: number = 1,
-    perPage: number = 30,
-) {
+export async function getProjects() {
     try {
-        // Ensure perPage is within limits
-        if (perPage > 100) {
-            perPage = 100;
-        }
-
-        const queryParams = new URLSearchParams();
-        queryParams.append("page", page.toString());
-        queryParams.append("per_page", perPage.toString());
-
-        const response = await plankaRequest(
-            `/api/projects?${queryParams.toString()}`,
-            {
-                method: "GET",
-            },
-        );
+        const response = await plankaRequest(`/api/projects`, {
+            method: "GET",
+        });
 
         const parsedResponse = ProjectsResponseSchema.parse(response);
         return parsedResponse;
@@ -120,6 +104,25 @@ export async function getProjects(
     }
 }
 
+export async function updateProject(
+    id: string,
+    options: Partial<Omit<UpdateProjectOptions, "id">>,
+) {
+    const response = await plankaRequest(`/api/projects/${id}`, {
+        method: "PATCH",
+        body: options,
+    });
+    const parsedResponse = ProjectResponseSchema.parse(response);
+    return parsedResponse.item;
+}
+
+export async function deleteProject(id: string) {
+    await plankaRequest(`/api/projects/${id}`, {
+        method: "DELETE",
+    });
+    return { success: true };
+}
+
 /**
  * Retrieves a specific project by ID
  *
@@ -127,6 +130,26 @@ export async function getProjects(
  * @returns {Promise<object>} The requested project
  * @throws {Error} If retrieving the project fails
  */
+export async function createProject(options: CreateProjectOptions) {
+    try {
+        const response = await plankaRequest(`/api/projects`, {
+            method: "POST",
+            body: {
+                name: options.name,
+                description: options.description,
+            },
+        });
+        const parsedResponse = ProjectResponseSchema.parse(response);
+        return parsedResponse.item;
+    } catch (error) {
+        throw new Error(
+            `Failed to create project: ${
+                error instanceof Error ? error.message : String(error)
+            }`,
+        );
+    }
+}
+
 export async function getProject(id: string) {
     try {
         const response = await plankaRequest(`/api/projects/${id}`);

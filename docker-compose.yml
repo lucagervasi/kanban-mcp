@@ -2,7 +2,7 @@ version: "3"
 
 services:
   kanban:
-    image: ghcr.io/plankanban/planka:latest
+    image: ghcr.io/plankanban/planka:v2.0.0
     container_name: kanban
     restart: unless-stopped
     ports:

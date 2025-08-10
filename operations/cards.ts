@@ -23,6 +23,7 @@ export const CreateCardSchema = z.object({
     name: z.string().describe("Card name"),
     description: z.string().optional().describe("Card description"),
     position: z.number().optional().describe("Card position (default: 65535)"),
+    type: z.string().optional().describe("Card type (default: 'project')"),
 });
 
 /**
@@ -56,9 +57,10 @@ export const UpdateCardSchema = z.object({
     description: z.string().optional().describe("Card description"),
     position: z.number().optional().describe("Card position"),
     dueDate: z.string().optional().describe("Card due date (ISO format)"),
-    isCompleted: z.boolean().optional().describe(
-        "Whether the card is completed",
+    isClosed: z.boolean().optional().describe(
+        "Whether the card is closed",
     ),
+    type: z.string().optional().describe("Card type"),
 });
 
 export const MoveCardSchema = z.object({
@@ -144,6 +146,7 @@ export async function createCard(options: CreateCardOptions) {
                     name: options.name,
                     description: options.description,
                     position: options.position,
+                    type: options.type || "project",
                 },
             },
         );
@@ -166,83 +169,15 @@ export async function createCard(options: CreateCardOptions) {
  */
 export async function getCards(listId: string) {
     try {
-        // Get all projects which includes boards
-        const projectsResponse = await plankaRequest(`/api/projects`);
-
-        if (
-            !projectsResponse ||
-            typeof projectsResponse !== "object" ||
-            !("included" in projectsResponse) ||
-            !projectsResponse.included ||
-            typeof projectsResponse.included !== "object"
-        ) {
-            return [];
-        }
-
-        const included = projectsResponse.included as Record<string, unknown>;
-
-        // Get all boards
-        if (!("boards" in included) || !Array.isArray(included.boards)) {
-            return [];
-        }
-
-        const boards = included.boards;
-
-        // Check each board for cards with the matching list ID
-        for (const board of boards) {
-            if (
-                typeof board !== "object" || board === null || !("id" in board)
-            ) {
-                continue;
-            }
-
-            const boardId = board.id as string;
-
-            // Get the board details which includes cards
-            const boardResponse = await plankaRequest(`/api/boards/${boardId}`);
-
-            if (
-                !boardResponse ||
-                typeof boardResponse !== "object" ||
-                !("included" in boardResponse) ||
-                !boardResponse.included ||
-                typeof boardResponse.included !== "object"
-            ) {
-                continue;
-            }
-
-            const boardIncluded = boardResponse.included as Record<
-                string,
-                unknown
-            >;
-
-            if (
-                !("cards" in boardIncluded) ||
-                !Array.isArray(boardIncluded.cards)
-            ) {
-                continue;
-            }
-
-            const cards = boardIncluded.cards;
-
-            // Filter cards by list ID
-            const matchingCards = cards.filter((card) =>
-                typeof card === "object" &&
-                card !== null &&
-                "listId" in card &&
-                card.listId === listId
-            );
-
-            if (matchingCards.length > 0) {
-                return matchingCards;
-            }
-        }
-
-        // If we couldn't find any cards for this list ID
-        return [];
+        const response = await plankaRequest(`/api/lists/${listId}/cards`);
+        const parsedResponse = CardsResponseSchema.parse(response);
+        return parsedResponse.items;
     } catch (error) {
-        // If all else fails, return an empty array
-        return [];
+        throw new Error(
+            `Failed to get cards: ${
+                error instanceof Error ? error.message : String(error)
+            }`,
+        );
     }
 }
 
@@ -267,7 +202,7 @@ export async function getCard(id: string) {
  */
 export async function updateCard(
     id: string,
-    options: Partial<Omit<CreateCardOptions, "listId">>,
+    options: Partial<Omit<UpdateCardOptions, "id">>,
 ) {
     const response = await plankaRequest(`/api/cards/${id}`, {
         method: "PATCH",
