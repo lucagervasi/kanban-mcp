@@ -45,6 +45,7 @@ server.tool(
       .enum([
         "get_projects",
         "get_project",
+        "create_project",
         "get_boards",
         "create_board",
         "get_board",
@@ -55,7 +56,8 @@ server.tool(
       .describe("The action to perform"),
     id: z.string().optional().describe("The ID of the project or board"),
     projectId: z.string().optional().describe("The ID of the project"),
-    name: z.string().optional().describe("The name of the board"),
+    name: z.string().optional().describe("The name of the project or board"),
+    description: z.string().optional().describe("The description of the project"),
     position: z.number().optional().describe("The position of the board"),
     type: z.string().optional().describe("The type of the board"),
     boardId: z
@@ -84,6 +86,15 @@ server.tool(
       case "get_project":
         if (!args.id) throw new Error("id is required for get_project action");
         result = await projects.getProject(args.id);
+        break;
+
+      case "create_project":
+        if (!args.name)
+          throw new Error("name is required for create_project action");
+        result = await projects.createProject({
+          name: args.name,
+          description: args.description,
+        });
         break;
 
       case "get_boards":
