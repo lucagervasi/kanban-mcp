@@ -49,40 +49,7 @@ export async function getCardDetails(params: GetCardDetailsParams) {
         // Get comments for the card
         const comments = await getComments(card.id);
 
-        // Find the board ID by searching through all projects and boards
-        let boardId = null;
-
-        // Get all projects
-        const projectsResponse = await getProjects(1, 100);
-        const projects = projectsResponse.items;
-
-        // For each project, get its boards
-        for (const project of projects) {
-            if (boardId) break; // Stop if we already found the board ID
-
-            const boards = await getBoards(project.id);
-
-            // For each board, get its lists
-            for (const board of boards) {
-                if (boardId) break; // Stop if we already found the board ID
-
-                const lists = await getLists(board.id);
-
-                // Check if the card's list ID is in this board
-                const matchingList = lists.find((list: any) =>
-                    list.id === card.listId
-                );
-
-                if (matchingList) {
-                    boardId = board.id;
-                    break;
-                }
-            }
-        }
-
-        if (!boardId) {
-            throw new Error(`Could not determine board ID for card ${cardId}`);
-        }
+        const boardId = card.boardId;
 
         const labels = await getLabels(boardId);
 

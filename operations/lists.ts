@@ -20,6 +20,7 @@ export const CreateListSchema = z.object({
     boardId: z.string().describe("Board ID"),
     name: z.string().describe("List name"),
     position: z.number().optional().describe("List position (default: 65535)"),
+    type: z.string().optional().describe("List type (default: 'active')"),
 });
 
 /**
@@ -40,6 +41,8 @@ export const UpdateListSchema = z.object({
     id: z.string().describe("List ID"),
     name: z.string().optional().describe("List name"),
     position: z.number().optional().describe("List position"),
+    type: z.string().optional().describe("List type"),
+    color: z.string().optional().describe("List color"),
 });
 
 /**
@@ -92,6 +95,7 @@ export async function createList(options: CreateListOptions) {
                 body: {
                     name: options.name,
                     position: options.position,
+                    type: options.type || "active",
                 },
             },
         );
@@ -114,30 +118,15 @@ export async function createList(options: CreateListOptions) {
  */
 export async function getLists(boardId: string) {
     try {
-        // Get the board which includes lists in the response
-        const response = await plankaRequest(`/api/boards/${boardId}`);
-
-        // Check if the response has the expected structure
-        if (
-            response &&
-            typeof response === "object" &&
-            "included" in response &&
-            response.included &&
-            typeof response.included === "object" &&
-            "lists" in (response.included as Record<string, unknown>)
-        ) {
-            // Get the lists from the included property
-            const lists = (response.included as Record<string, unknown>).lists;
-            if (Array.isArray(lists)) {
-                return lists;
-            }
-        }
-
-        // If we can't find lists in the expected format, return an empty array
-        return [];
+        const response = await plankaRequest(`/api/boards/${boardId}/lists`);
+        const parsedResponse = ListsResponseSchema.parse(response);
+        return parsedResponse.items;
     } catch (error) {
-        // If all else fails, return an empty array
-        return [];
+        throw new Error(
+            `Failed to get lists: ${
+                error instanceof Error ? error.message : String(error)
+            }`,
+        );
     }
 }
 

@@ -14,31 +14,48 @@ import { PlankaLabelSchema } from "../common/types.js";
  * Valid color options for labels in Planka
  */
 export const VALID_LABEL_COLORS = [
-    "berry-red",
-    "pumpkin-orange",
-    "lagoon-blue",
-    "pink-tulip",
-    "light-mud",
-    "orange-peel",
-    "bright-moss",
-    "antique-blue",
-    "dark-granite",
-    "lagune-blue",
-    "sunny-grass",
+    "muddy-grey",
+    "autumn-leafs",
     "morning-sky",
-    "light-orange",
-    "midnight-blue",
-    "tank-green",
-    "gun-metal",
-    "wet-moss",
-    "red-burgundy",
-    "light-concrete",
-    "apricot-red",
-    "desert-sand",
-    "navy-blue",
+    "antique-blue",
     "egg-yellow",
-    "coral-green",
+    "desert-sand",
+    "dark-granite",
+    "fresh-salad",
+    "lagoon-blue",
+    "midnight-blue",
+    "light-orange",
+    "pumpkin-orange",
+    "light-concrete",
+    "sunny-grass",
+    "navy-blue",
+    "lilac-eyes",
+    "apricot-red",
+    "orange-peel",
+    "silver-glint",
+    "bright-moss",
+    "deep-ocean",
+    "summer-sky",
+    "berry-red",
     "light-cocoa",
+    "grey-stone",
+    "tank-green",
+    "coral-green",
+    "sugar-plum",
+    "pink-tulip",
+    "shady-rust",
+    "wet-rock",
+    "wet-moss",
+    "turquoise-sea",
+    "lavender-fields",
+    "piggy-red",
+    "light-mud",
+    "gun-metal",
+    "modern-green",
+    "french-coast",
+    "sweet-lilac",
+    "red-burgundy",
+    "pirate-gold",
 ] as const;
 
 /**
@@ -198,31 +215,15 @@ export async function createLabel(options: CreateLabelOptions) {
  */
 export async function getLabels(boardId: string) {
     try {
-        // Get the board which includes labels in the response
-        const response = await plankaRequest(`/api/boards/${boardId}`);
-
-        // Check if the response has the expected structure
-        if (
-            response &&
-            typeof response === "object" &&
-            "included" in response &&
-            response.included &&
-            typeof response.included === "object" &&
-            "labels" in (response.included as Record<string, unknown>)
-        ) {
-            // Get the labels from the included property
-            const labels =
-                (response.included as Record<string, unknown>).labels;
-            if (Array.isArray(labels)) {
-                return labels;
-            }
-        }
-
-        // If we can't find labels in the expected format, return an empty array
-        return [];
+        const response = await plankaRequest(`/api/boards/${boardId}/labels`);
+        const parsedResponse = LabelsResponseSchema.parse(response);
+        return parsedResponse.items;
     } catch (error) {
-        // If all else fails, return an empty array
-        return [];
+        throw new Error(
+            `Failed to get labels: ${
+                error instanceof Error ? error.message : String(error)
+            }`,
+        );
     }
 }
 
@@ -283,9 +284,8 @@ export async function deleteLabel(id: string) {
  */
 export async function addLabelToCard(cardId: string, labelId: string) {
     try {
-        // The correct endpoint is /api/cards/{cardId}/labels with labelId in the body
         await plankaRequest(
-            `/api/cards/${cardId}/labels`,
+            `/api/cards/${cardId}/card-labels`,
             {
                 method: "POST",
                 body: {
@@ -313,9 +313,8 @@ export async function addLabelToCard(cardId: string, labelId: string) {
  */
 export async function removeLabelFromCard(cardId: string, labelId: string) {
     try {
-        // The correct endpoint is /api/cards/{cardId}/labels/{labelId}
         await plankaRequest(
-            `/api/cards/${cardId}/labels/${labelId}`,
+            `/api/cards/${cardId}/card-labels/${labelId}`,
             {
                 method: "DELETE",
             },

@@ -101,10 +101,11 @@ const CommentActionResponseSchema = z.object({
 export async function createComment(options: CreateCommentOptions) {
     try {
         const response = await plankaRequest(
-            `/api/cards/${options.cardId}/comment-actions`,
+            `/api/cards/${options.cardId}/actions`,
             {
                 method: "POST",
                 body: {
+                    type: "commentCard",
                     text: options.text,
                 },
             },
@@ -296,7 +297,7 @@ export async function updateComment(
     options: Partial<Omit<CreateCommentOptions, "cardId">>,
 ) {
     try {
-        const response = await plankaRequest(`/api/comment-actions/${id}`, {
+        const response = await plankaRequest(`/api/actions/${id}`, {
             method: "PATCH",
             body: {
                 text: options.text,
@@ -322,7 +323,7 @@ export async function updateComment(
  */
 export async function deleteComment(id: string) {
     try {
-        await plankaRequest(`/api/comment-actions/${id}`, {
+        await plankaRequest(`/api/actions/${id}`, {
             method: "DELETE",
         });
         return { success: true };
